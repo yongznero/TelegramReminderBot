@@ -7,6 +7,7 @@ import re
 import json
 import os
 from dateutil import parser as date_parser
+from aiohttp import web
 
 # Enable logging
 logging.basicConfig(
@@ -259,6 +260,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"({time_str})"
     )
 
+# Health check endpoint for Render
+async def health_check(request):
+    """Health check endpoint for Render"""
+    return web.Response(text="OK")
+
+async def run_web_server():
+    """Run a simple web server for health checks"""
+    app = web.Application()
+    app.router.add_get('/', health_check)
+    app.router.add_get('/health', health_check)
+    
+    port = int(os.environ.get('PORT', 10000))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    logger.info(f"Health check server running on port {port}")
+
 async def main():
     """Start the bot"""
     # Get token from environment variable
@@ -283,6 +302,9 @@ async def main():
     await application.initialize()
     await application.start()
     await application.updater.start_polling()
+    
+    # Start health check server
+    await run_web_server()
     
     # Run until stopped
     try:
