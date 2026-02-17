@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from datetime import datetime, timedelta
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
@@ -258,7 +259,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"({time_str})"
     )
 
-def main():
+async def main():
     """Start the bot"""
     # Get token from environment variable
     BOT_TOKEN = os.environ.get('BOT_TOKEN')
@@ -277,7 +278,24 @@ def main():
     
     # Start the Bot
     logger.info("Bot is starting...")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    
+    # Initialize application
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling()
+    
+    # Run until stopped
+    try:
+        # Keep the bot running
+        while True:
+            await asyncio.sleep(1)
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Bot is shutting down...")
+    finally:
+        await application.updater.stop()
+        await application.stop()
+        await application.shutdown()
 
 if __name__ == '__main__':
-    main()
+    # Run the async main function
+    asyncio.run(main())
