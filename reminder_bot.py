@@ -1,10 +1,7 @@
-import os
 import logging
 from datetime import datetime, timedelta
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.date import DateTrigger
 import re
 import json
 import os
@@ -16,10 +13,6 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
-# Initialize scheduler
-scheduler = BackgroundScheduler()
-scheduler.start()
 
 # File to store reminders persistently
 REMINDERS_FILE = 'reminders.json'
@@ -267,8 +260,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     """Start the bot"""
-    # Replace 'YOUR_BOT_TOKEN_HERE' with your actual bot token from BotFather
-    BOT_TOKEN = os.environ.get('BOT_TOKEN', 'YOUR_BOT_TOKEN_HERE')
+    # Get token from environment variable
+    BOT_TOKEN = os.environ.get('BOT_TOKEN')
+    
+    if not BOT_TOKEN:
+        raise ValueError("No BOT_TOKEN found! Please set it in Render environment variables.")
     
     # Create the Application
     application = Application.builder().token(BOT_TOKEN).build()
